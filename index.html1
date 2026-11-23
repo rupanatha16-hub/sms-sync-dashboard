@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0b1a">
+<title>SMS Sync</title>
+<style>
+:root{
+  --bg:#0f0b1a; --card:#1a1429; --card2:#221a36; --line:#2f2548;
+  --text:#f1ecfb; --mute:#9d92b8; --purple:#7c3aed; --purple2:#a78bfa;
+  --red:#dc2626; --green:#22c55e; --amber:#f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Devanagari",sans-serif;font-size:15px;line-height:1.5}
+body{min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+input{font:inherit;color:inherit}
+.hidden{display:none!important}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+
+/* Login */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px 22px;box-shadow:0 20px 60px rgba(124,58,237,.18)}
+.logo{width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,var(--purple),#4c1d95);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.login-box h1{font-size:26px;margin-bottom:4px}
+.login-box p{color:var(--mute);margin-bottom:20px}
+label{display:block;font-size:13px;color:var(--mute);margin:12px 0 6px}
+.field{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:13px 14px;outline:none;transition:border-color .2s}
+.field:focus{border-color:var(--purple2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:14px;background:var(--purple);font-weight:600;transition:transform .15s,background .2s}
+.btn:hover{background:#6d28d9}.btn:active{transform:scale(.97)}
+.btn.full{width:100%;margin-top:20px}
+.btn.ghost{background:var(--card2);border:1px solid var(--line);font-weight:500}
+.btn.ghost:hover{background:var(--line)}
+.btn.small{padding:8px 14px;font-size:13px;border-radius:11px}
+.btn:disabled{opacity:.6;cursor:default}
+.err{color:#fca5a5;font-size:13px;margin-top:12px;min-height:18px}
+
+/* Header */
+header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+header .logo{width:42px;height:42px;border-radius:14px;margin:0;flex:none}
+header h1{font-size:20px;line-height:1.2}
+header small{color:var(--mute);font-size:12px;word-break:break-all}
+header .spacer{flex:1;min-width:0}
+
+/* Sections */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:16px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.panel-head h2{font-size:16px}
+.device{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--card2);margin-top:10px;cursor:pointer;transition:border-color .2s}
+.device.sel{border-color:var(--purple2);box-shadow:0 0 0 1px var(--purple2) inset}
+.device .info{flex:1;min-width:0}
+.device .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.device .meta{color:var(--mute);font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.06)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mute)}
+.pill.on{color:var(--green)}.pill.on .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.pill.warn{color:var(--amber)}.pill.warn .dot{background:var(--amber)}
+.pill.off{color:var(--mute)}
+.btn-dc{background:transparent;border:1px solid var(--red);color:#fca5a5;padding:7px 12px;border-radius:10px;font-size:12px}
+.btn-dc:hover{background:rgba(220,38,38,.15)}
+.empty{text-align:center;color:var(--mute);padding:22px 8px}
+
+/* Toolbar */
+.toolbar{display:flex;gap:10px;margin-bottom:12px}
+.toolbar .field{flex:1;min-width:0}
+.count{color:var(--mute);font-size:13px;margin:0 2px 10px}
+.count b{color:var(--purple2)}
+
+/* Message card */
+.msg{background:var(--card2);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px;animation:pop .25s ease}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.msg-top{display:flex;align-items:center;gap:10px}
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--purple),#4c1d95);display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.msg-top .who{flex:1;min-width:0}
+.msg-top .sname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-top .snum{color:var(--mute);font-size:12px;word-break:break-all}
+.msg-time{color:var(--mute);font-size:12px;margin-top:8px}
+.msg-body{margin:8px 0 12px;white-space:pre-wrap;word-break:break-word}
+.msg-foot{display:flex;justify-content:flex-end}
+.del{display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;font-size:13px;font-weight:600;padding:7px 12px;border-radius:10px;transition:transform .15s,background .2s}
+.del:hover{background:#b91c1c}.del:active{transform:scale(.95)}
+.clear{display:inline-flex;align-items:center;gap:6px;background:transparent;color:#fca5a5;border:1px solid var(--red);font-size:13px;font-weight:600;padding:8px 12px;border-radius:12px;flex:none}
+.clear:hover{background:rgba(220,38,38,.15)}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(5,3,12,.75);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;animation:fade .2s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;animation:pop .25s ease}
+.modal h3{font-size:18px;margin-bottom:8px}
+.modal p{color:var(--mute);margin-bottom:18px}
+.modal .row{display:flex;gap:10px;justify-content:flex-end}
+.btn.red{background:var(--red)}.btn.red:hover{background:#b91c1c}
+.code{font-size:40px;font-weight:700;letter-spacing:8px;text-align:center;color:var(--purple2);margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.timer{text-align:center;color:var(--mute);margin-bottom:16px}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--card2);border:1px solid var(--purple2);padding:10px 18px;border-radius:14px;z-index:60;max-width:90%;text-align:center;animation:pop .25s ease}
+.note{color:var(--mute);font-size:12px;text-align:center;margin:8px 0 24px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="loginView" class="login hidden">
+  <div class="login-box">
+    <div class="logo"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+    <h1>SMS Sync</h1>
+    <p>अपने अकाउंट से लॉगिन कीजिए</p>
+    <label for="email">Email</label>
+    <input id="email" class="field" type="email" autocomplete="username" inputmode="email">
+    <label for="pass">Password</label>
+    <input id="pass" class="field" type="password" autocomplete="current-password">
+    <button id="loginBtn" class="btn full">Login</button>
+    <div id="loginErr" class="err"></div>
+  </div>
+</section>
+
+<!-- APP -->
+<main id="appView" class="wrap hidden">
+  <header>
+    <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+    <div class="spacer"><h1>SMS Sync</h1><small id="userEmail"></small></div>
+    <button id="logoutBtn" class="btn ghost small">Logout</button>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Connected Devices</h2>
+      <button id="pairBtn" class="btn small">Pair Device</button>
+    </div>
+    <div id="devices"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2 id="inboxTitle">Incoming SMS</h2></div>
+    <div class="toolbar">
+      <input id="search" class="field" type="search" placeholder="Search: नाम, नंबर या मैसेज">
+      <button id="clearAll" class="clear">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        Clear All
+      </button>
+    </div>
+    <div id="count" class="count"></div>
+    <div id="messages"></div>
+  </section>
+  <p class="note">यहाँ सिर्फ़ फोन के नए SMS की कॉपी दिखती है। फोन के असली SMS पर कोई असर नहीं पड़ता।</p>
+</main>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyArhkmWgkKdeHnK5kMA5HHcSIm0cxBO0gg",
+  authDomain: "sms-sync-6c093.firebaseapp.com",
+  projectId: "sms-sync-6c093",
+  storageBucket: "sms-sync-6c093.firebasestorage.app",
+  messagingSenderId: "148853164236",
+  appId: "1:148853164236:web:3c080ae7aeb5a15fde5a69"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = id => document.getElementById(id);
+const TRASH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
+
+let user = null, devices = [], selectedId = null, messages = [], query = "";
+let unsubDevices = null, unsubMsgs = null;
+let pairing = null; // {code, timer, expires}
+
+/* ---------- helpers ---------- */
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function ms(v){
+  if (v == null) return 0;
+  if (typeof v === "number") return v;
+  if (typeof v.toMillis === "function") return v.toMillis();
+  if (v.seconds != null) return v.seconds * 1000;
+  const d = Date.parse(v); return isNaN(d) ? 0 : d;
+}
+function fmt(v){
+  const t = ms(v); if (!t) return "—";
+  return new Date(t).toLocaleString("en-IN", {day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit", hour12:true});
+}
+function toast(text){
+  const el = document.createElement("div");
+  el.className = "toast"; el.textContent = text;
+  $("toastRoot").appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+function confirmBox(title, text, okLabel){
+  return new Promise(resolve => {
+    const root = $("modalRoot");
+    root.innerHTML = `<div class="overlay"><div class="modal" role="dialog" aria-modal="true">
+      <h3>${esc(title)}</h3><p>${esc(text)}</p>
+      <div class="row"><button class="btn ghost small" id="cNo">Cancel</button><button class="btn red small" id="cYes">${esc(okLabel)}</button></div>
+    </div></div>`;
+    const done = v => { root.innerHTML = ""; resolve(v); };
+    $("cNo").onclick = () => done(false);
+    $("cYes").onclick = () => done(true);
+  });
+}
+
+/* ---------- login / logout ---------- */
+async function doLogin(){
+  const email = $("email").value.trim(), pass = $("pass").value;
+  $("loginErr").textContent = "";
+  if (!email || !pass){ $("loginErr").textContent = "Email और Password दोनों भरिए।"; return; }
+  $("loginBtn").disabled = true; $("loginBtn").textContent = "Login हो रहा है...";
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e){
+    const c = e.code || "";
+    let m = "Login नहीं हो पाया। दोबारा कोशिश कीजिए।";
+    if (c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) m = "Email या Password गलत है।";
+    else if (c.includes("invalid-email")) m = "Email सही तरह से लिखिए।";
+    else if (c.includes("too-many-requests")) m = "बहुत ज़्यादा कोशिशें हुईं। थोड़ी देर बाद फिर कोशिश कीजिए।";
+    else if (c.includes("network")) m = "इंटरनेट नहीं चल रहा।";
+    else if (c.includes("unauthorized-domain")) m = "यह वेबसाइट Firebase में Authorized domain में नहीं जुड़ी है।";
+    $("loginErr").textContent = m;
+  }
+  $("loginBtn").disabled = false; $("loginBtn").textContent = "Login";
+}
+$("loginBtn").onclick = doLogin;
+$("pass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+$("logoutBtn").onclick = async () => {
+  if (await confirmBox("Logout", "क्या आप Logout करना चाहते हैं?", "Logout")) signOut(auth);
+};
+
+onAuthStateChanged(auth, u => {
+  user = u;
+  if (u){
+    $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden");
+    $("userEmail").textContent = u.email || "";
+    startDevices();
+  } else {
+    stopAll();
+    $("appView").classList.add("hidden"); $("loginView").classList.remove("hidden");
+    $("pass").value = "";
+  }
+});
+
+function stopAll(){
+  if (unsubDevices) unsubDevices(); if (unsubMsgs) unsubMsgs();
+  unsubDevices = unsubMsgs = null; devices = []; messages = []; selectedId = null;
+  closePairing(true);
+}
+
+/* ---------- devices ---------- */
+function startDevices(){
+  if (unsubDevices) unsubDevices();
+  unsubDevices = onSnapshot(collection(db, "users", user.uid, "devices"), snap => {
+    const prevPaired = devices.filter(d => d.paired).length;
+    devices = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    const nowPaired = devices.filter(d => d.paired).length;
+    if (!devices.find(d => d.id === selectedId)){
+      const first = devices.find(d => d.paired) || devices[0];
+      selectedId = first ? first.id : null;
+      listenMessages();
+    }
+    if (pairing && nowPaired > prevPaired){ closePairing(true); toast("डिवाइस जुड़ गया ✓"); }
+    renderDevices(); renderMessages();
+  }, err => toast("Devices नहीं मिले: " + (err.code || err.message)));
+}
+
+function renderDevices(){
+  const box = $("devices");
+  if (!devices.length){
+    box.innerHTML = '<div class="empty">कोई डिवाइस नहीं जुड़ा है।<br>ऊपर "Pair Device" दबाइए।</div>';
+    return;
+  }
+  box.innerHTML = devices.map(d => {
+    let pill;
+    if (!d.paired) pill = '<span class="pill off"><span class="dot"></span>Disconnected</span>';
+    else if (d.syncEnabled) pill = '<span class="pill on"><span class="dot"></span>Connected · Sync ON</span>';
+    else pill = '<span class="pill warn"><span class="dot"></span>Connected · Sync OFF</span>';
+    return `<div class="device ${d.id === selectedId ? "sel" : ""}" data-id="${esc(d.id)}">
+      <div class="info"><div class="name">${esc(d.name || "Android Phone")}</div>
+      ${pill}<div class="meta">Last seen: ${esc(fmt(d.lastSeen))}</div></div>
+      ${d.paired ? '<button class="btn-dc" data-dc="' + esc(d.id) + '">Disconnect</button>' : ""}
+    </div>`;
+  }).join("");
+  box.querySelectorAll(".device").forEach(el => el.onclick = e => {
+    if (e.target.closest("[data-dc]")) return;
+    selectedId = el.dataset.id; listenMessages(); renderDevices(); renderMessages();
+  });
+  box.querySelectorAll("[data-dc]").forEach(b => b.onclick = async () => {
+    const id = b.dataset.dc;
+    if (!(await confirmBox("Disconnect Device", "इस डिवाइस से Sync बंद हो जाएगा। फोन से नया SMS अब नहीं आएगा।", "Disconnect"))) return;
+    try { await updateDoc(doc(db, "users", user.uid, "devices", id), {paired:false, syncEnabled:false}); toast("डिवाइस Disconnect हो गया"); }
+    catch(e){ toast("Disconnect नहीं हो पाया: " + (e.code || e.message)); }
+  });
+}
+
+/* ---------- messages ---------- */
+function listenMessages(){
+  if (unsubMsgs){ unsubMsgs(); unsubMsgs = null; }
+  messages = [];
+  if (!selectedId) return;
+  unsubMsgs = onSnapshot(collection(db, "users", user.uid, "devices", selectedId, "messages"), snap => {
+    messages = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => ms(b.timestamp) - ms(a.timestamp));
+    renderMessages();
+  }, err => toast("Messages नहीं मिले: " + (err.code || err.message)));
+}
+
+function renderMessages(){
+  const dev = devices.find(d => d.id === selectedId);
+  $("inboxTitle").textContent = dev ? "Incoming SMS · " + (dev.name || "Android Phone") : "Incoming SMS";
+  const q = query.trim().toLowerCase();
+  const list = q ? messages.filter(m => ((m.sender||"") + " " + (m.number||"") + " " + (m.body||"")).toLowerCase().includes(q)) : messages;
+  $("count").innerHTML = q ? `<b>${list.length}</b> मिले (कुल ${messages.length})` : `कुल मैसेज: <b>${messages.length}</b>`;
+  $("clearAll").classList.toggle("hidden", !messages.length);
+  const box = $("messages");
+  if (!selectedId){ box.innerHTML = '<div class="empty">पहले कोई डिवाइस जोड़िए।</div>'; return; }
+  if (!list.length){
+    box.innerHTML = '<div class="empty">' + (q ? "कोई मैसेज नहीं मिला।" : "अभी कोई नया SMS नहीं आया है।") + '</div>';
+    return;
+  }
+  box.innerHTML = list.map(m => {
+    const name = m.sender || m.number || "Unknown";
+    return `<article class="msg">
+      <div class="msg-top"><div class="av">${esc(name.trim().charAt(0).toUpperCase() || "?")}</div>
+        <div class="who"><div class="sname">${esc(name)}</div><div class="snum">${esc(m.number || "")}</div></div></div>
+      <div class="msg-time">${esc(fmt(m.timestamp))}</div>
+      <div class="msg-body">${esc(m.body)}</div>
+      <div class="msg-foot"><button class="del" data-del="${esc(m.id)}">${TRASH}Delete</button></div>
+    </article>`;
+  }).join("");
+  box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!(await confirmBox("Delete Message", "यह मैसेज Dashboard से हमेशा के लिए मिट जाएगा। फोन का असली SMS नहीं मिटेगा।", "Delete"))) return;
+    try { await deleteDoc(doc(db, "users", user.uid, "devices", selectedId, "messages", b.dataset.del)); toast("मैसेज डिलीट हो गया"); }
+    catch(e){ toast("डिलीट नहीं हो पाया: " + (e.code || e.message)); }
+  });
+}
+$("search").addEventListener("input", e => { query = e.target.value; renderMessages(); });
+
+$("clearAll").onclick = async () => {
+  if (!messages.length) return;
+  if (!(await confirmBox("Clear All", `इस डिवाइस के सभी ${messages.length} मैसेज हमेशा के लिए मिट जाएँगे। फोन का असली SMS नहीं मिटेगा।`, "Clear All"))) return;
+  try {
+    const ids = messages.map(m => m.id);
+    for (let i = 0; i < ids.length; i += 400){
+      const batch = writeBatch(db);
+      ids.slice(i, i + 400).forEach(id => batch.delete(doc(db, "users", user.uid, "devices", selectedId, "messages", id)));
+      await batch.commit();
+    }
+    toast("सभी मैसेज डिलीट हो गए");
+  } catch(e){ toast("Clear All नहीं हो पाया: " + (e.code || e.message)); }
+};
+
+/* ---------- pairing ---------- */
+function randomCode(){
+  const a = new Uint32Array(1); crypto.getRandomValues(a);
+  return String(100000 + (a[0] % 900000));
+}
+async function closePairing(silent){
+  if (!pairing) { $("modalRoot").innerHTML = ""; return; }
+  const p = pairing; pairing = null;
+  clearInterval(p.timer);
+  $("modalRoot").innerHTML = "";
+  try { await deleteDoc(doc(db, "pairingCodes", p.code)); } catch(e){}
+}
+$("pairBtn").onclick = async () => {
+  if (pairing) return;
+  $("pairBtn").disabled = true;
+  let code = null, expires = 0;
+  for (let i = 0; i < 6 && !code; i++){
+    const c = randomCode(), exp = Date.now() + 5 * 60 * 1000;
+    try { await setDoc(doc(db, "pairingCodes", c), {uid: user.uid, expiresAt: exp}); code = c; expires = exp; }
+    catch(e){ if (e.code !== "permission-denied") break; }
+  }
+  $("pairBtn").disabled = false;
+  if (!code){ toast("कोड नहीं बन पाया। दोबारा कोशिश कीजिए।"); return; }
+  pairing = {code, expires, timer: null};
+  $("modalRoot").innerHTML = `<div class="overlay"><div class="modal" role="dialog" aria-modal="true">
+    <h3>Pair Device</h3><p>फोन के SMS Sync ऐप में इसी अकाउंट से लॉगिन करके यह कोड डालिए।</p>
+    <div class="code">${esc(code.slice(0,3))} ${esc(code.slice(3))}</div>
+    <div class="timer" id="pTimer"></div>
+    <div class="row"><button class="btn ghost small" id="pClose">Cancel</button></div>
+  </div></div>`;
+  $("pClose").onclick = () => closePairing();
+  const tick = () => {
+    const left = Math.max(0, Math.floor((expires - Date.now()) / 1000));
+    const el = $("pTimer"); if (el) el.textContent = `कोड ${Math.floor(left/60)}:${String(left%60).padStart(2,"0")} में समाप्त होगा`;
+    if (left <= 0){ closePairing(); toast("कोड समाप्त हो गया। नया कोड बनाइए।"); }
+  };
+  tick(); pairing.timer = setInterval(tick, 1000);
+};
+</script>
+</body>
+</html>
